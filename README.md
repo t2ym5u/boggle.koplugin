@@ -2,13 +2,22 @@
 
 A Boggle-style word search plugin for [KOReader](https://github.com/koreader/koreader).
 
+
+## Screenshot
+
+*(Screenshot to be added.)*
+
+## Rules
+
+Find words by connecting adjacent letters (horizontally, vertically, or diagonally) in the letter grid. Each letter may be used only once per word. Words must be at least 3 letters long. Longer words score more points — race against the clock!
+
 ## Concept
 
 Find as many words as possible in a 4×4 grid of letters by connecting adjacent
 letters (including diagonals). Each letter may only be used once per word.
 Longer words score more points.
 
-## Planned Features
+## Features
 
 - **Grid sizes** — 4×4 (classic), 5×5 (extended)
 - **Multiple languages** — dictionaries for EN, FR, DE, ES
@@ -29,6 +38,7 @@ Longer words score more points.
 | Cancel current word | Tap **Cancel** |
 | New game | Tap **New game** |
 | Change language | Tap **Lang** |
+| Show rules | Tap **Rules** |
 
 ## Why e-ink friendly?
 
