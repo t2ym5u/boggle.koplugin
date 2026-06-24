@@ -79,7 +79,7 @@ end
 
 function BoggleScreen:buildLayout()
     local sw           = DeviceScreen:getWidth()
-    local sh           = DeviceScreen:getHeight()
+    local sh = DeviceScreen:getHeight()
     local is_landscape = self:isLandscape()
 
     local btn_width = is_landscape
