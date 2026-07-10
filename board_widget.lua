@@ -44,10 +44,10 @@ function BoggleBoardWidget:init()
     local ord_fs = math.max(6, math.floor(cell * 0.3))
     self.ord_face = Font:getFace("smallinfofont", ord_fs)
 
-    self.paint_rect = nil
+    self.paint_rect = Geom:new{ x = 0, y = 0, w = self.w, h = self.h }
 
     self.ges_events = {
-        CellTap = { GestureRange:new{ ges = "tap", range = self.dimen } },
+        CellTap = { GestureRange:new{ ges = "tap", range = function() return self.paint_rect end } },
     }
 end
 
