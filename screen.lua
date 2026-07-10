@@ -112,7 +112,7 @@ function BoggleScreen:buildLayout()
         board      = self.board,
         max_width  = board_size,
         max_height = board_size,
-        onCellTap  = function(r, c) self:onCellTap(r, c) end,
+        cellTapCallback  = function(r, c) self:onCellTap(r, c) end,
     }
 
     local board_frame = FrameContainer:new{
