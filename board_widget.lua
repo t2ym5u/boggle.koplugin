@@ -27,7 +27,7 @@ local BoggleBoardWidget = InputContainer:extend{
     board      = nil,
     max_width  = 0,
     max_height = 0,
-    onCellTap  = nil,
+    cellTapCallback = nil,
 }
 
 function BoggleBoardWidget:init()
@@ -67,7 +67,7 @@ function BoggleBoardWidget:onCellTap(ges)
     local r = math.floor(ly / self.cell) + 1
     local n = self.board.n
     if r >= 1 and r <= n and c >= 1 and c <= n then
-        if self.onCellTap then self.onCellTap(r, c) end
+        if self.cellTapCallback then self.cellTapCallback(r, c) end
     end
     return true
 end
