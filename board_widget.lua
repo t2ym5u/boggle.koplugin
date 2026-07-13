@@ -58,7 +58,7 @@ local function centeredText(bb, text, face, cx, cy, color)
     RenderText:renderUtf8Text(bb, tx, ty, face, text, true, false, color or Blitbuffer.COLOR_BLACK)
 end
 
-function BoggleBoardWidget:onCellTap(ges)
+function BoggleBoardWidget:onCellTap(_, ges)
     if not self.paint_rect then return end
     local lx = ges.pos.x - self.paint_rect.x
     local ly = ges.pos.y - self.paint_rect.y
@@ -110,7 +110,7 @@ function BoggleBoardWidget:paintTo(bb, x, y)
 
             local tc = (ord or is_last) and C_SEL_TXT or C_TEXT
             centeredText(bb, board.grid[r][c], self.letter_face,
-                cx + cell // 2, cy + cell // 2, tc)
+                cx + math.floor(cell / 2), cy + math.floor(cell / 2), tc)
 
             -- Show order number in top-left corner of selected cell
             if ord then
@@ -127,10 +127,10 @@ function BoggleBoardWidget:paintTo(bb, x, y)
         for i = 1, #board.path - 1 do
             local p1 = board.path[i]
             local p2 = board.path[i + 1]
-            local x1 = x + (p1.c - 1) * cell + cell // 2
-            local y1 = y + (p1.r - 1) * cell + cell // 2
-            local x2 = x + (p2.c - 1) * cell + cell // 2
-            local y2 = y + (p2.r - 1) * cell + cell // 2
+            local x1 = x + (p1.c - 1) * cell + math.floor(cell / 2)
+            local y1 = y + (p1.r - 1) * cell + math.floor(cell / 2)
+            local x2 = x + (p2.c - 1) * cell + math.floor(cell / 2)
+            local y2 = y + (p2.r - 1) * cell + math.floor(cell / 2)
             -- Draw line from (x1,y1) to (x2,y2)
             local lw = math.max(1, math.floor(cell * 0.05))
             local steps = math.max(math.abs(x2 - x1), math.abs(y2 - y1))
