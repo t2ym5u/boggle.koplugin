@@ -86,21 +86,23 @@ function BoggleScreen:buildLayout()
         and math.max(math.floor(sw * 0.38), 120)
         or  math.floor(sw * 0.9)
 
-    local top_buttons = ButtonTable:new{
+    local title_bar = self:buildTitleBar(_("Boggle"), function()
+        return {
+            { text = _("New game"),     callback = function() self:onNewGame() end },
+            { text = self:_langLabel(), callback = function() self:openLangMenu() end },
+            self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
+        }
+    end)
+
+    local action_buttons = ButtonTable:new{
         shrink_unneeded_width = true,
         width   = btn_width,
         buttons = {{
-            { text = _("New"),    callback = function() self:onNewGame() end },
             { text = _("Submit"), callback = function() self:onSubmit() end },
             { text = _("Clear"),  callback = function() self:onClear() end },
-            { id = "lang_btn", text = self:_langLabel(),
-              callback = function() self:openLangMenu() end },
             { text = _("Done"),   callback = function() self:onEndGame() end },
-            self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
-            self:makeCloseButtonConfig(),
         }},
     }
-    self.lang_btn = top_buttons:getButtonById("lang_btn")
 
     -- Board widget
     local board_size = is_landscape
@@ -139,18 +141,19 @@ function BoggleScreen:buildLayout()
     if is_landscape then
         local right = VerticalGroup:new{
             align = "center",
-            top_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            action_buttons,
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.word_list_widget,
         }
-        self.layout = HorizontalGroup:new{
+        local content = HorizontalGroup:new{
             align  = "center",
             board_frame,
             HorizontalSpan:new{ width = Size.span.horizontal_default },
             right,
         }
+        self:buildLandscapeLayout(title_bar, content)
     else
         local content = VerticalGroup:new{
             align = "center",
@@ -158,9 +161,14 @@ function BoggleScreen:buildLayout()
             VerticalSpan:new{ width = Size.span.vertical_large },
             self.status_text,
         }
-        self:buildPortraitLayout(top_buttons, content, self.word_list_widget)
+        local footer = VerticalGroup:new{
+            align = "center",
+            action_buttons,
+            VerticalSpan:new{ width = Size.span.vertical_large },
+            self.word_list_widget,
+        }
+        self:buildPortraitLayout(title_bar, content, footer)
     end
-    self[1] = self.layout
     self:updateStatus()
 end
 
