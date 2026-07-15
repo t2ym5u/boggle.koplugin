@@ -22,6 +22,7 @@ local _               = require("i18n")
 local T               = require("ffi/util").template
 
 local Font       = require("ui/font")
+local MenuHelper = require("menu_helper")
 local ScreenBase = require("screen_base")
 local BoggleBoard       = lrequire("board")
 local BoggleBoardWidget = lrequire("board_widget")
