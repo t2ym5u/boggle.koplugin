@@ -7,4 +7,7 @@ return {
     ["Missed: %1"]                        = { fr = "Manqué : %1" },
     ["Word: %1  Score: %2  Found: %3"]    = { fr = "Mot : %1  Score : %2  Trouvé : %3" },
     ["Score: %1  Found: %2/%3"]           = { fr = "Score : %1  Trouvé : %2/%3" },
+    ["Game over! Score: %1  Words: %2/%3"] = { fr = "Partie terminée ! Score : %1  Mots : %2/%3" },
+    ["Boggle"]                             = { fr = "Boggle" },
+    ["Find words by connecting adjacent letters on the grid."] = { fr = "Trouvez des mots en reliant des lettres adjacentes sur la grille." },
 }
