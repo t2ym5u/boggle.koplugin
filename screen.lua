@@ -139,6 +139,9 @@ function BoggleScreen:buildLayout()
         height = list_h,
     }
 
+    self.status_text:setMaxWidth(is_landscape and btn_width
+        or (self.board_widget.w + (Size.padding.default + Size.margin.default) * 2))
+
     if is_landscape then
         local right = VerticalGroup:new{
             align = "center",
