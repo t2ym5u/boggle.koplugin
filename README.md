@@ -5,7 +5,7 @@ A Boggle-style word search plugin for [KOReader](https://github.com/koreader/kor
 
 ## Screenshot
 
-*(Screenshot to be added.)*
+![Screenshot](images/boggle.png)
 
 ## Rules
 
