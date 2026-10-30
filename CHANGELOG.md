@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-10-30
+
+### Changed
+- Redesigned play screen: the grid fills the room the controls leave, with the
+  found words in a scrolling box above a full-width Submit/Clear/Done bar.
+- The status line reads "WORD · Score: 12 · Found: 5/48", the word being
+  traced first so it stays visible, and wraps in landscape.
+- After Done, every missed word is listed under the found ones in the word
+  box, instead of the first twenty on the status line, where they never
+  fitted. The status shows the final score.
+- Once the round is over, the action bar shows "New game" in place of its
+  buttons.
+- The language entry in the title-bar menu reads "Language: EN" instead of a
+  bare "EN".
+
+### Fixed
+- Letters and the small order numbers on traced tiles are fitted to their
+  tile; their size used to be scaled by DPI twice, so they overflowed on
+  high-DPI screens.
+
 ## [1.3.2] - 2026-10-07
 
 ### Fixed

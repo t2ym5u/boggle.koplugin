@@ -7,14 +7,12 @@ local function lrequire(name)
     return package.loaded[key]
 end
 
-local ButtonTable     = require("ui/widget/buttontable")
 local Device          = require("device")
 local FrameContainer  = require("ui/widget/container/framecontainer")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
 local HorizontalSpan  = require("ui/widget/horizontalspan")
 local Size            = require("ui/size")
-local TextBoxWidget   = require("ui/widget/textboxwidget")
-local TextWidget      = require("ui/widget/textwidget")
+local ScrollTextWidget = require("ui/widget/scrolltextwidget")
 local UIManager       = require("ui/uimanager")
 local VerticalGroup   = require("ui/widget/verticalgroup")
 local VerticalSpan    = require("ui/widget/verticalspan")
@@ -79,13 +77,7 @@ function BoggleScreen:serializeState()
 end
 
 function BoggleScreen:buildLayout()
-    local sw           = DeviceScreen:getWidth()
-    local sh = DeviceScreen:getHeight()
     local is_landscape = self:isLandscape()
-
-    local btn_width = is_landscape
-        and math.max(math.floor(sw * 0.38), 120)
-        or  math.floor(sw * 0.9)
 
     local title_bar = self:buildTitleBar(_("Boggle"), function()
         return {
@@ -95,22 +87,38 @@ function BoggleScreen:buildLayout()
         }
     end)
 
-    local action_buttons = ButtonTable:new{
-        shrink_unneeded_width = true,
-        width   = btn_width,
-        buttons = {{
+    -- Found words (and, once the game is over, the missed ones): a scrolling
+    -- box the width of the controls, three lines under the board in portrait,
+    -- a taller column beside it in landscape.
+    local controls_w = self:getControlsWidth()
+    self.status_text:setMaxWidth(controls_w)
+    local list_face = Font:getFace("smallinfofont")
+    local list_lines = is_landscape and 8 or 3
+    self.word_list_widget = ScrollTextWidget:new{
+        text   = self:_buildWordListText(),
+        face   = list_face,
+        width  = controls_w,
+        height = math.ceil(list_face.size * 1.3 * list_lines),
+        dialog = self,
+    }
+    local controls = VerticalGroup:new{
+        align = "center",
+        self.status_text,
+        VerticalSpan:new{ width = Size.span.vertical_large },
+        self.word_list_widget,
+        VerticalSpan:new{ width = Size.span.vertical_default },
+        self:buildActionBar({
             { text = _("Submit"), callback = function() self:onSubmit() end },
             { text = _("Clear"),  callback = function() self:onClear() end },
             { text = _("Done"),   callback = function() self:onEndGame() end },
-        }},
+        }),
     }
 
-    -- Board widget
-    local board_size = is_landscape
-        and math.floor(math.min(sw * 0.45, sh * 0.7))
-        or  math.floor(sw * 0.8)
-    board_size = math.max(board_size, 80)
-
+    -- Board widget: it draws its own border, so the frame only pads it.
+    local frame_pad   = Size.padding.default
+    local frame_extra = 2 * frame_pad
+    local budget_w, budget_h = self:getBoardBudget(title_bar, controls)
+    local board_size = math.max(math.min(budget_w, budget_h) - frame_extra, 80)
     self.board_widget = BoggleBoardWidget:new{
         board      = self.board,
         max_width  = board_size,
@@ -119,61 +127,30 @@ function BoggleScreen:buildLayout()
     }
 
     local board_frame = FrameContainer:new{
-        padding = Size.padding.default,
-        margin  = Size.margin.default,
+        padding    = frame_pad,
+        margin     = 0,
+        bordersize = 0,
         self.board_widget,
     }
 
-    -- Word list display (found words)
-    local list_w = is_landscape
-        and math.max(math.floor(sw * 0.38) - Size.margin.default * 2, 100)
-        or  btn_width - Size.margin.default * 2
-    local list_h = is_landscape
-        and math.floor(sh * 0.35)
-        or  math.floor(sh * 0.2)
-
-    self.word_list_widget = TextBoxWidget:new{
-        text   = self:_buildWordListText(),
-        face   = Font:getFace("smallinfofont"),
-        width  = list_w,
-        height = list_h,
-    }
-
-    self.status_text:setMaxWidth(is_landscape and btn_width
-        or (self.board_widget.w + (Size.padding.default + Size.margin.default) * 2))
-
     if is_landscape then
-        local right = VerticalGroup:new{
-            align = "center",
-            self.status_text,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            action_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.word_list_widget,
-        }
         local content = HorizontalGroup:new{
-            align  = "center",
+            align = "center",
             board_frame,
-            HorizontalSpan:new{ width = Size.span.horizontal_default },
-            right,
+            HorizontalSpan:new{ width = self:getGutter() },
+            controls,
         }
         self:buildLandscapeLayout(title_bar, content)
     else
-        local content = VerticalGroup:new{
-            align = "center",
-            board_frame,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.status_text,
-        }
-        local footer = VerticalGroup:new{
-            align = "center",
-            action_buttons,
-            VerticalSpan:new{ width = Size.span.vertical_large },
-            self.word_list_widget,
-        }
-        self:buildPortraitLayout(title_bar, content, footer)
+        self:buildPortraitLayout(title_bar, board_frame,
+            VerticalGroup:new{ align = "center", controls, VerticalSpan:new{ width = self:getGutter() } })
     end
     self:updateStatus()
+end
+
+-- "Done" ends the round; the board then only shows the missed words.
+function BoggleScreen:isRoundOver()
+    return self.board.done
 end
 
 function BoggleScreen:onCellTap(r, c)
@@ -206,17 +183,12 @@ end
 
 function BoggleScreen:onEndGame()
     self.board:endGame()
-    -- Show missed words
-    local missed = self.board:getMissedWords()
-    local parts = {}
-    for i = 1, math.min(20, #missed) do
-        parts[#parts + 1] = missed[i].word
-    end
-    if #parts > 0 then
-        self:updateStatus(T(_("Missed: %1"), table.concat(parts, ", ")))
-    end
+    -- The missed words join the word list (they never fitted on the one
+    -- status line); the status shows the final score.
     self:_refreshWordList()
+    self:updateStatus()
     self.board_widget:refresh()
+    self:refreshActionBar()
     self.plugin:saveState(self.board:serialize())
 end
 
@@ -251,43 +223,55 @@ end
 
 function BoggleScreen:_langLabel()
     local lang = self.plugin:getSetting("lang", "en")
-    return lang == "fr" and "FR" or "EN"
+    return T(_("Language: %1"), lang == "fr" and "FR" or "EN")
 end
 
 function BoggleScreen:_refreshWordList()
     if self.word_list_widget then
-        self.word_list_widget:setText(self:_buildWordListText())
+        -- ScrollTextWidget has no setText: update its inner text box, then
+        -- its scroll bar, which now covers the longer list.
+        local list = self.word_list_widget
+        list.text_widget:setText(self:_buildWordListText())
+        list:resetScroll()
         UIManager:setDirty(self, function() return "ui", self.dimen end)
     end
 end
 
 function BoggleScreen:_buildWordListText()
     local found = self.board:getFoundWords()
-    if #found == 0 then return _("No words found yet.") end
     local parts = {}
     for _, entry in ipairs(found) do
         parts[#parts + 1] = string.format("%s(%d)", entry.word, entry.score)
     end
-    return table.concat(parts, "  ")
+    local text = #parts > 0 and table.concat(parts, "  ") or _("No words found yet.")
+    if self.board.done then
+        local missed = {}
+        for _, entry in ipairs(self.board:getMissedWords()) do
+            missed[#missed + 1] = entry.word
+        end
+        if #missed > 0 then
+            text = text .. "\n\n" .. T(_("Missed: %1"), table.concat(missed, ", "))
+        end
+    end
+    return text
 end
 
 function BoggleScreen:updateStatus(msg)
     local status
     if msg then
         status = msg
-    elseif self.board.done then
-        local found = self.board:getFoundWords()
-        status = T(_("Game over! Score: %1  Words: %2/%3"),
-            self.board.score, #found, self.board.total_possible)
     else
-        local word = self.board:getCurrentWord()
         local found_cnt = 0
         for _ in pairs(self.board.found) do found_cnt = found_cnt + 1 end
-        if word ~= "" then
-            status = T(_("Word: %1  Score: %2  Found: %3"), word, self.board.score, found_cnt)
+        local progress = self:joinStatus(
+            T(_("Score: %1"), self.board.score),
+            T(_("Found: %1/%2"), found_cnt, self.board.total_possible))
+        if self.board.done then
+            status = self:joinStatus(_("Game over!"), progress)
         else
-            status = T(_("Score: %1  Found: %2/%3"),
-                self.board.score, found_cnt, self.board.total_possible)
+            -- The word being traced leads, so it stays visible when the
+            -- line is cut short in the landscape side panel.
+            status = self:joinStatus(self.board:getCurrentWord(), progress)
         end
     end
     ScreenBase.updateStatus(self, status)

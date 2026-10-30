@@ -1,4 +1,5 @@
 local Blitbuffer     = require("ffi/blitbuffer")
+local Device         = require("device")
 local Font           = require("ui/font")
 local Geom           = require("ui/geometry")
 local GestureRange   = require("ui/gesturerange")
@@ -18,6 +19,28 @@ local C_LAST    = Blitbuffer.COLOR_GRAY_4
 local C_BORDER  = Blitbuffer.COLOR_BLACK
 local C_TEXT    = Blitbuffer.COLOR_BLACK
 local C_SEL_TXT = Blitbuffer.COLOR_WHITE
+
+local Screen = Device.screen
+
+-- Largest face whose ink for `sample` fits max_w x max_h. Measured unbounded
+-- (a max_width limit cuts the text, so the width test could never fail), ink
+-- height is y_top + y_bottom, and Font:getFace scales its size by the DPI, so
+-- the pixel bound is converted back first.
+local function fitFace(name, sample, max_w, max_h)
+    local lo = 6
+    local hi = math.max(lo, math.floor(max_h * 1000 / Screen:scaleBySize(1000)) * 2)
+    local best = lo
+    while lo <= hi do
+        local mid = math.floor((lo + hi) / 2)
+        local m = RenderText:sizeUtf8Text(0, Screen:getWidth(), Font:getFace(name, mid), sample, true, false)
+        if m.x <= max_w and m.y_top + m.y_bottom <= max_h then
+            best, lo = mid, mid + 1
+        else
+            hi = mid - 1
+        end
+    end
+    return Font:getFace(name, best)
+end
 
 -- ---------------------------------------------------------------------------
 -- BoggleBoardWidget
@@ -39,10 +62,8 @@ function BoggleBoardWidget:init()
     self.h    = cell * n
     self.dimen = Geom:new{ w = self.w, h = self.h }
 
-    local fs = math.max(10, math.floor(cell * 0.6))
-    self.letter_face = Font:getFace("cfont", fs)
-    local ord_fs = math.max(6, math.floor(cell * 0.3))
-    self.ord_face = Font:getFace("smallinfofont", ord_fs)
+    self.letter_face = fitFace("cfont", "W", math.floor(cell * 0.7), math.floor(cell * 0.5))
+    self.ord_face    = fitFace("smallinfofont", "16", math.floor(cell * 0.25), math.floor(cell * 0.16))
 
     self.paint_rect = Geom:new{ x = 0, y = 0, w = self.w, h = self.h }
 
@@ -51,10 +72,11 @@ function BoggleBoardWidget:init()
     }
 end
 
+-- Centre `text` on (cx, cy): the baseline sits half the ink height below cy.
 local function centeredText(bb, text, face, cx, cy, color)
-    local m = RenderText:sizeUtf8Text(0, cx * 2, face, text, true, false)
+    local m = RenderText:sizeUtf8Text(0, Screen:getWidth(), face, text, true, false)
     local tx = cx - math.floor(m.x / 2)
-    local ty = cy - math.floor((m.y_bottom - m.y_top) / 2)
+    local ty = cy + math.floor((m.y_top - m.y_bottom) / 2)
     RenderText:renderUtf8Text(bb, tx, ty, face, text, true, false, color or Blitbuffer.COLOR_BLACK)
 end
 
@@ -114,9 +136,8 @@ function BoggleBoardWidget:paintTo(bb, x, y)
 
             -- Show order number in top-left corner of selected cell
             if ord then
-                local small_x = cx + pad + 2
-                local small_y = cy + pad + 2
-                RenderText:renderUtf8Text(bb, small_x, small_y + (self.ord_face.size or 8),
+                local m = RenderText:sizeUtf8Text(0, Screen:getWidth(), self.ord_face, tostring(ord), true, false)
+                RenderText:renderUtf8Text(bb, cx + 2 * pad, cy + 2 * pad + m.y_top,
                     self.ord_face, tostring(ord), true, false, C_SEL_TXT)
             end
         end
