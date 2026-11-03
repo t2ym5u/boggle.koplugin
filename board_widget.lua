@@ -51,6 +51,11 @@ local BoggleBoardWidget = InputContainer:extend{
     max_width  = 0,
     max_height = 0,
     cellTapCallback = nil,
+    -- Multiplayer: the grid is only read, from across a table, so the
+    -- letters are bigger and taps are ignored; `hidden` draws empty tiles
+    -- (between rounds, before the next grid is rolled).
+    display_only = false,
+    hidden       = false,
 }
 
 function BoggleBoardWidget:init()
@@ -62,11 +67,16 @@ function BoggleBoardWidget:init()
     self.h    = cell * n
     self.dimen = Geom:new{ w = self.w, h = self.h }
 
-    self.letter_face = fitFace("cfont", "W", math.floor(cell * 0.7), math.floor(cell * 0.5))
+    if self.display_only then
+        self.letter_face = fitFace("cfont", "W", math.floor(cell * 0.75), math.floor(cell * 0.56))
+    else
+        self.letter_face = fitFace("cfont", "W", math.floor(cell * 0.7), math.floor(cell * 0.5))
+    end
     self.ord_face    = fitFace("smallinfofont", "16", math.floor(cell * 0.25), math.floor(cell * 0.16))
 
     self.paint_rect = Geom:new{ x = 0, y = 0, w = self.w, h = self.h }
 
+    if self.display_only then return end
     self.ges_events = {
         CellTap = { GestureRange:new{ ges = "tap", range = function() return self.paint_rect end } },
     }
@@ -131,8 +141,10 @@ function BoggleBoardWidget:paintTo(bb, x, y)
             bb:paintRect(cx + pad, cy + pad, cell - 2*pad, cell - 2*pad, bg)
 
             local tc = (ord or is_last) and C_SEL_TXT or C_TEXT
-            centeredText(bb, board.grid[r][c], self.letter_face,
-                cx + math.floor(cell / 2), cy + math.floor(cell / 2), tc)
+            if not self.hidden then
+                centeredText(bb, board.grid[r][c], self.letter_face,
+                    cx + math.floor(cell / 2), cy + math.floor(cell / 2), tc)
+            end
 
             -- Show order number in top-left corner of selected cell
             if ord then

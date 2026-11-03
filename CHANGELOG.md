@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-11-02
+
+### Added
+- **Boggle · multiplayer** (« Boggle · à plusieurs »), listed under Tools →
+  Games → Party & quiz, or **Mode: Multiplayer** in the game's menu. It
+  replaces the separate **Boggle Party** plugin, which is retired: Boggle
+  Party is now "Boggle · multiplayer". Everything it did is here — the big
+  grid for table play, the 2–5 minute countdown where only the timer
+  refreshes, the reveal at zero with every word grouped by length and the
+  totals, EN/FR word lists, the show/hide timer choice — plus players and
+  scores: after the reveal, players cross out the words someone else also
+  found and tap the length of each word left, the reader adds up the points;
+  a match of 1–10 rounds with a scoreboard after each and a winner at the end.
+  Pause/Resume during a round; a match in progress is saved and comes back
+  (a running round paused).
+- On the first multiplayer launch, Boggle Party's language, duration and
+  timer choice are imported, unless multiplayer settings already exist
+  (Boggle Party's settings file is only read).
+
+### Changed
+- Family-friendly words: the missed-word list, the multiplayer solutions
+  and the word total leave out vulgar, sexual, scatological, slur and
+  drug-related words (`blocklist.lua`). A player who finds one still scores
+  it.
+
+### Fixed
+- The English word list could be another game's: it was loaded with
+  `require("words_en")`, which searches every word game's directory, so with
+  e.g. Word Search or Wordle installed Boggle could end up with their much shorter list and
+  rejected ordinary words. It now always reads its own list, and each list is
+  loaded once (a restored game used to read the French one twice).
+
 ## [1.4.1] - 2026-11-02
 
 ### Changed

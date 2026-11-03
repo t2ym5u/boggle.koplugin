@@ -232,3 +232,15 @@ describe("English dictionary", function()
     end)
 end)
 
+
+describe("dictionary loading", function()
+    it("loads each language once and always from this plugin", function()
+        local Board = require("board")
+        local a = Board:new{ lang = "en", defer = true }
+        local b = Board:new{ lang = "en", defer = true }
+        assert.are.equal(a.dict, b.dict)
+        assert.is_true(a.dict["crossword"] == true)
+        -- a deferred board rolls nothing until a grid is loaded
+        assert.are.same({}, a.grid)
+    end)
+end)
