@@ -2,6 +2,6 @@ local _ = require("gettext")
 
 return {
     fullname    = _("Boggle"),
-    description = _("Find words by connecting adjacent letters on the grid."),
-    version     = "1.4.1",
+    description = _("Find words by connecting adjacent letters on the grid — alone, or around the table with friends."),
+    version     = "1.5.0",
 }

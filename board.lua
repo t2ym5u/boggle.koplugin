@@ -1,4 +1,5 @@
 local _dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
+local Blocklist = assert(loadfile(_dir .. "blocklist.lua"))()
 
 local grid_utils = require("grid_utils")
 local shuffle    = grid_utils.shuffle
@@ -52,20 +53,29 @@ function BoggleBoard:new(opts)
         dict    = nil,     -- will be loaded lazily
     }, self)
     obj:_loadDict()
-    obj:newGame()
+    -- opts.defer: the caller loads a saved grid right after, so rolling and
+    -- solving one here would be wasted (solving takes seconds on a slow reader).
+    if not opts.defer then obj:newGame() end
     return obj
 end
 
+-- The dictionary of the language last loaded, shared by every board (solo
+-- and multiplayer screens, a board restored over a fresh one): each list is
+-- ~25 MB once loaded, so it is read once, and the other language is dropped
+-- when the language changes. Always this plugin's own file: require() would
+-- search package.path, where every word game prepends its own directory, and
+-- could return another game's (much shorter) words_en.lua.
+local dict_cache = { lang = nil, dict = nil }
+
 function BoggleBoard:_loadDict()
-    self.dict = nil
-    if self.lang == "fr" then
-        local path = _dir .. "words_fr.lua"
-        local fn = loadfile(path)
-        self.dict = fn and fn() or {}
-    else
-        local ok, d = pcall(require, "words_en")
-        self.dict = ok and d or {}
+    local lang = self.lang == "fr" and "fr" or "en"
+    if dict_cache.lang ~= lang then
+        dict_cache.lang, dict_cache.dict = nil, nil
+        local fn = loadfile(_dir .. "words_" .. lang .. ".lua")
+        dict_cache.dict = fn and fn() or {}
+        dict_cache.lang = lang
     end
+    self.dict = dict_cache.dict
 end
 
 function BoggleBoard:newGame()
@@ -115,9 +125,13 @@ end
 
 function BoggleBoard:_findAll()
     self._all_words = {}
+    -- The grid's word list is what the game reveals (missed words, the
+    -- solutions, the total): it leaves out the family-friendly blocklist
+    -- (blocklist.lua). Those words are still accepted when a player finds one.
+    local blocked = Blocklist.set(self.lang)
     local n = self.n
     local function dfs(r, c, used, word)
-        if #word >= 3 and self.dict[word:lower()] then
+        if #word >= 3 and self.dict[word:lower()] and not blocked[word] then
             self._all_words[word] = wordScore(#word)
         end
         if #word >= 8 then return end

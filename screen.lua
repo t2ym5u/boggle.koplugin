@@ -24,6 +24,7 @@ local MenuHelper = require("menu_helper")
 local ScreenBase = require("screen_base")
 local BoggleBoard       = lrequire("board")
 local BoggleBoardWidget = lrequire("board_widget")
+local Rules             = lrequire("rules")
 
 local DeviceScreen = Device.screen
 
@@ -31,34 +32,7 @@ local DeviceScreen = Device.screen
 -- BoggleScreen
 -- ---------------------------------------------------------------------------
 
-local GAME_RULES_EN = _([[
-Boggle — Rules
 
-Find as many words as possible by connecting adjacent letters in the 4×4 grid.
-
-Rules:
-• Letters must be adjacent (horizontally, vertically, or diagonally).
-• Each letter in the grid may only be used once per word.
-• Minimum word length: 3 letters.
-• Longer words score more points.
-
-Tap letters in sequence to build a word, then tap Submit to score it.
-The timer counts down — find as many words as you can before it runs out!
-]])
-
-local GAME_RULES_FR = [[
-Boggle — Règles
-
-Trouvez le plus de mots possible en reliant des lettres adjacentes dans la grille.
-
-Règles :
-• Les lettres doivent être adjacentes (horizontalement, verticalement ou en diagonale).
-• Chaque lettre de la grille ne peut être utilisée qu'une seule fois par mot.
-• Longueur minimale : 3 lettres.
-• Les mots plus longs rapportent plus de points.
-
-Appuyez sur les lettres dans l'ordre pour former un mot, puis sur Valider. La minuterie décompte — trouvez le maximum de mots avant la fin !
-]]
 
 local BoggleScreen = ScreenBase:extend{}
 
@@ -66,10 +40,18 @@ function BoggleScreen:init()
     local state = self.plugin:loadState()
     local lang  = self.plugin:getSetting("lang", "en")
     self.board  = BoggleBoard:new{ lang = lang }
-    if not self.board:load(state) then
+    if self.fresh then
+        -- switched here from the multiplayer mode: a new game
+        self.plugin:saveState(self.board:serialize())
+    elseif not self.board:load(state) then
         -- fresh game
     end
     ScreenBase.init(self)
+end
+
+-- Mode switch (main.lua): keep the game, the other mode replaces the screen.
+function BoggleScreen:saveGame()
+    self.plugin:saveState(self.board:serialize())
 end
 
 function BoggleScreen:serializeState()
@@ -83,7 +65,8 @@ function BoggleScreen:buildLayout()
         return {
             { text = _("New game"),     callback = function() self:onNewGame() end },
             { text = self:_langLabel(), callback = function() self:openLangMenu() end },
-            self:makeRulesButtonConfig(GAME_RULES_EN, GAME_RULES_FR),
+            { text = T(_("Mode: %1"), _("Solo")), callback = function() self:openModeMenu() end },
+            self:makeModeRulesButtonConfig(Rules),
         }
     end)
 
@@ -218,6 +201,16 @@ function BoggleScreen:openLangMenu()
             end
             self:onNewGame()
         end,
+    }
+end
+
+function BoggleScreen:openModeMenu()
+    MenuHelper.openPickerMenu{
+        title      = _("Mode"),
+        items      = { { id = "solo", text = _("Solo") }, { id = "party", text = _("Multiplayer") } },
+        current_id = "solo",
+        parent     = self,
+        on_select  = function(mode) self.plugin:switchMode(mode) end,
     }
 end
 

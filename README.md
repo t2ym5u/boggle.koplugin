@@ -37,8 +37,41 @@ Longer words score more points.
 | Submit word | Tap **Submit** or re-tap the last letter |
 | Cancel current word | Tap **Cancel** |
 | New game | Tap **New game** |
-| Change language | Tap **Lang** |
+| Change language | Menu → **Language: EN** |
+| Multiplayer | Menu → **Mode: Solo** → Multiplayer |
 | Show rules | Tap **Rules** |
+
+## Multiplayer ("Boggle · multiplayer")
+
+**Boggle Party is now "Boggle · multiplayer"**: the separate Boggle Party
+plugin (`boggleparty.koplugin`) is retired, and everything it did lives here.
+Open it from **Tools → Games → Party & quiz → Boggle · multiplayer** (FR:
+« Boggle · à plusieurs »), or switch with **Mode: Multiplayer** in the game's
+menu. On the first multiplayer launch, Boggle Party's language, duration and
+timer choice are imported (its settings file is only read, never changed).
+
+Lay the reader in the middle of the table; everyone plays on paper.
+
+- **Large grid** — letters fill the screen, readable from across the table,
+  portrait or landscape; the grid stays blank until **Start round**.
+- **Countdown** — 2, 3, 4 or 5 minutes (**Duration** in the menu, which also
+  shows/hides the timer); only the timer area refreshes, once a second.
+  **Pause / Resume** during the round; a round interrupted by closing the game
+  comes back paused.
+- **Auto-reveal at zero** (or **Solutions** / **Show solution**): every word
+  of the grid, grouped by length with the totals.
+- **Scoring helper** — players read their lists aloud and cross out every word
+  someone else also found. Then, player by player, tap the length of each word
+  left (**3–4**, **5**, **6**, **7**, **8+**): the reader adds up the standard
+  points. **Undo** removes the last tap or goes back to the previous player;
+  **Next player**, then **End round** adds the round to the scores.
+- **Match** — 2 to 8 players (names remembered), 1 to 10 rounds; a scoreboard
+  after each round, the winner (or tie) at the end, then **New game**.
+- **EN / FR** word lists (Language in the menu, separate from the solo game's).
+
+| Length | 3 | 4 | 5 | 6 | 7 | 8+ |
+|--------|---|---|---|---|---|----|
+| Points | 1 | 1 | 2 | 3 | 5 | 11 |
 
 ## Why e-ink friendly?
 
