@@ -61,8 +61,10 @@ end
 
 -- The dictionary of the language last loaded, shared by every board (solo
 -- and multiplayer screens, a board restored over a fresh one): each list is
--- ~25 MB once loaded, so it is read once, and the other language is dropped
--- when the language changes. Always this plugin's own file: require() would
+-- ~10 MB once loaded, so it is read once, and the other language is dropped
+-- when the language changes. It loads with the first board, not with the
+-- module, and BoggleBoard.release() (the screen closing) drops it: reading it
+-- again takes a few tens of milliseconds on a desktop. Always this plugin's own file: require() would
 -- search package.path, where every word game prepends its own directory, and
 -- could return another game's (much shorter) words_en.lua.
 local dict_cache = { lang = nil, dict = nil }
@@ -146,6 +148,11 @@ local function buildPrefixes(dict)
 end
 
 function BoggleBoard:_prefixes()
+    -- A board that outlived a release() (cache emptied while it was still
+    -- open) puts its dictionary back as the shared one.
+    if dict_cache.dict == nil and self.dict then
+        dict_cache.lang, dict_cache.dict = self.lang == "fr" and "fr" or "en", self.dict
+    end
     if dict_cache.dict ~= self.dict then return buildPrefixes(self.dict) end
     if not dict_cache.prefixes then dict_cache.prefixes = buildPrefixes(self.dict) end
     return dict_cache.prefixes
@@ -343,6 +350,17 @@ function BoggleBoard:load(data)
     self:_loadDict()
     self:_findAll()
     return true
+end
+
+-- Drops the loaded dictionary and its prefixes (called when the game screen
+-- closes); the next board reads its language's list again.
+function BoggleBoard.release()
+    dict_cache.lang, dict_cache.dict, dict_cache.prefixes = nil, nil, nil
+end
+
+-- The languages whose dictionary is loaded now (for the specs).
+function BoggleBoard.loadedLanguages()
+    return dict_cache.lang and { dict_cache.lang } or {}
 end
 
 BoggleBoard.SIZES      = SIZES

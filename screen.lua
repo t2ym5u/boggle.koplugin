@@ -273,4 +273,10 @@ function BoggleScreen:updateStatus(msg)
     ScreenBase.updateStatus(self, status)
 end
 
+-- The dictionary is only needed while a game is open: drop it when the
+-- screen closes (the next game reads its language's list again).
+function BoggleScreen:onCloseWidget()
+    BoggleBoard.release()
+end
+
 return BoggleScreen
