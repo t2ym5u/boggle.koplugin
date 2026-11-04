@@ -70,7 +70,7 @@ local dict_cache = { lang = nil, dict = nil }
 function BoggleBoard:_loadDict()
     local lang = self.lang == "fr" and "fr" or "en"
     if dict_cache.lang ~= lang then
-        dict_cache.lang, dict_cache.dict = nil, nil
+        dict_cache.lang, dict_cache.dict, dict_cache.prefixes = nil, nil, nil
         local fn = loadfile(_dir .. "words_" .. lang .. ".lua")
         dict_cache.dict = fn and fn() or {}
         dict_cache.lang = lang
@@ -123,42 +123,82 @@ function BoggleBoard:newGame()
     self:_findAll()
 end
 
+-- Every proper prefix (3 to 7 letters) of the dictionary's words, built once
+-- per language next to the dictionary: the grid search below drops a path as
+-- soon as its letters cannot start any word, instead of walking every path of
+-- up to 8 cells (a few hundred milliseconds per grid on a desktop, several
+-- seconds on a slow reader). Shorter prefixes are not stored: nearly every
+-- 1-2 letter start leads somewhere, so they would not prune anything.
+local MAX_LEN = 8
+local function buildPrefixes(dict)
+    local prefixes, sub = {}, string.sub
+    for w in pairs(dict) do
+        local n = #w
+        if n > MAX_LEN then n = MAX_LEN end
+        -- Longest first: once a prefix is known, all its shorter ones are too.
+        for k = n - 1, 3, -1 do
+            local p = sub(w, 1, k)
+            if prefixes[p] then break end
+            prefixes[p] = true
+        end
+    end
+    return prefixes
+end
+
+function BoggleBoard:_prefixes()
+    if dict_cache.dict ~= self.dict then return buildPrefixes(self.dict) end
+    if not dict_cache.prefixes then dict_cache.prefixes = buildPrefixes(self.dict) end
+    return dict_cache.prefixes
+end
+
 function BoggleBoard:_findAll()
-    self._all_words = {}
+    local all = {}
+    self._all_words = all
     -- The grid's word list is what the game reveals (missed words, the
     -- solutions, the total): it leaves out the family-friendly blocklist
     -- (blocklist.lua). Those words are still accepted when a player finds one.
     local blocked = Blocklist.set(self.lang)
+    local dict, prefixes = self.dict, self:_prefixes()
     local n = self.n
-    local function dfs(r, c, used, word)
-        if #word >= 3 and self.dict[word:lower()] and not blocked[word] then
-            self._all_words[word] = wordScore(#word)
-        end
-        if #word >= 8 then return end
-        for dr = -1, 1 do
-            for dc = -1, 1 do
-                if not (dr == 0 and dc == 0) then
+    -- Lowercase letters (the dictionary's case) and neighbour lists, flat.
+    local letter, nbrs = {}, {}
+    for r = 1, n do
+        for c = 1, n do
+            local i = (r - 1) * n + c
+            letter[i] = self.grid[r][c]:lower()
+            local list = {}
+            for dr = -1, 1 do
+                for dc = -1, 1 do
                     local nr, nc = r + dr, c + dc
-                    if nr >= 1 and nr <= n and nc >= 1 and nc <= n then
-                        local key = nr * 10 + nc
-                        if not used[key] then
-                            used[key] = true
-                            dfs(nr, nc, used, word .. self.grid[nr][nc])
-                            used[key] = nil
-                        end
+                    if not (dr == 0 and dc == 0)
+                            and nr >= 1 and nr <= n and nc >= 1 and nc <= n then
+                        list[#list + 1] = (nr - 1) * n + nc
                     end
                 end
             end
+            nbrs[i] = list
         end
     end
-    for r = 1, n do
-        for c = 1, n do
-            local used = { [r * 10 + c] = true }
-            dfs(r, c, used, self.grid[r][c])
+    local used = {}
+    local function dfs(i, word, len)
+        if len >= 3 then
+            if dict[word] then
+                local up = word:upper()
+                if not blocked[up] then all[up] = wordScore(len) end
+            end
+            if len >= MAX_LEN or not prefixes[word] then return end
         end
+        used[i] = true
+        local list = nbrs[i]
+        for k = 1, #list do
+            local j = list[k]
+            if not used[j] then dfs(j, word .. letter[j], len + 1) end
+        end
+        used[i] = false
     end
+    for i = 1, n * n do dfs(i, letter[i], 1) end
     local count = 0
-    for _ in pairs(self._all_words) do count = count + 1 end
+    for _ in pairs(all) do count = count + 1 end
     self.total_possible = count
 end
 

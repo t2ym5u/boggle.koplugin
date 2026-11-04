@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] - 2026-11-04
+
+### Changed
+- Much faster grids: the word search now stops as soon as a run of letters
+  cannot start any word. Rolling a new grid went from about 0.2-0.3 s on a
+  desktop (several seconds on a reader) to a few milliseconds; the first
+  grid after opening also builds a small prefix list (about 0.03 s on a
+  desktop, under a second on a reader). Same words found as before.
+- Opening the game with a game in progress no longer rolls and solves a
+  throwaway grid before restoring yours: opening went from about 0.5 s on a
+  desktop (over 10 s on a reader) to about the time it takes to read the
+  dictionary.
+
 ## [1.5.1] - 2026-11-03
 
 ### Changed
