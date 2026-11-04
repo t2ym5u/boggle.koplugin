@@ -309,3 +309,41 @@ describe("prefix-pruned grid search", function()
         assert.is_true((os.clock() - t0) / 20 < 0.05)
     end)
 end)
+
+describe("dictionary memory", function()
+    it("is not loaded when the module is required", function()
+        local Fresh = assert(loadfile(DIR .. "board.lua"))()
+        assert.are.same({}, Fresh.loadedLanguages())
+    end)
+
+    it("loads only the language played, and release() drops it", function()
+        local Board = require("board")
+        Board.release()
+        assert.are.same({}, Board.loadedLanguages())
+        local b = Board:new{ lang = "fr", defer = true }
+        assert.are.same({ "fr" }, Board.loadedLanguages())
+        Board:new{ lang = "en", defer = true }
+        assert.are.same({ "en" }, Board.loadedLanguages())
+        Board.release()
+        assert.are.same({}, Board.loadedLanguages())
+        -- a board still open after a release keeps working and puts its
+        -- dictionary back as the shared one
+        math.randomseed(3)
+        b:newGame()
+        assert.is_true(b.total_possible > 0)
+        assert.are.same({ "fr" }, Board.loadedLanguages())
+        Board.release()
+    end)
+
+    it("rolls the same grid and words after a release", function()
+        local Board = require("board")
+        math.randomseed(42)
+        local a = Board:new{ lang = "en" }
+        Board.release()
+        math.randomseed(42)
+        local b = Board:new{ lang = "en" }
+        assert.are.same(a.grid, b.grid)
+        assert.are.same(a._all_words, b._all_words)
+        Board.release()
+    end)
+end)
