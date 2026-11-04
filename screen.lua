@@ -39,12 +39,15 @@ local BoggleScreen = ScreenBase:extend{}
 function BoggleScreen:init()
     local state = self.plugin:loadState()
     local lang  = self.plugin:getSetting("lang", "en")
-    self.board  = BoggleBoard:new{ lang = lang }
+    -- Restoring a save: defer, so the board does not roll and solve a grid
+    -- that load() replaces right away.
+    self.board  = BoggleBoard:new{ lang = lang, defer = not self.fresh }
     if self.fresh then
         -- switched here from the multiplayer mode: a new game
         self.plugin:saveState(self.board:serialize())
     elseif not self.board:load(state) then
-        -- fresh game
+        -- no (valid) save: a fresh game
+        self.board:newGame()
     end
     ScreenBase.init(self)
 end

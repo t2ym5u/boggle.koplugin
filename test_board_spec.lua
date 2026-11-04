@@ -244,3 +244,68 @@ describe("dictionary loading", function()
         assert.are.same({}, a.grid)
     end)
 end)
+
+-- The grid search prunes paths that start no dictionary word (1.6.0). This
+-- is the exhaustive search it replaced, kept to check the two agree.
+describe("prefix-pruned grid search", function()
+    local Board, Blocklist
+
+    setup(function()
+        Board = require("board")
+        Blocklist = assert(loadfile(DIR .. "blocklist.lua"))()
+    end)
+
+    local function exhaustive(b)
+        local out, blocked, n = {}, Blocklist.set(b.lang), b.n
+        local function dfs(r, c, used, word)
+            if #word >= 3 and b.dict[word:lower()] and not blocked[word] then
+                out[word] = Board.wordScore(#word)
+            end
+            if #word >= 8 then return end
+            for dr = -1, 1 do
+                for dc = -1, 1 do
+                    local nr, nc = r + dr, c + dc
+                    if not (dr == 0 and dc == 0) and nr >= 1 and nr <= n and nc >= 1 and nc <= n
+                            and not used[nr * 10 + nc] then
+                        used[nr * 10 + nc] = true
+                        dfs(nr, nc, used, word .. b.grid[nr][nc])
+                        used[nr * 10 + nc] = nil
+                    end
+                end
+            end
+        end
+        for r = 1, n do
+            for c = 1, n do dfs(r, c, { [r * 10 + c] = true }, b.grid[r][c]) end
+        end
+        return out
+    end
+
+    it("finds exactly the words the exhaustive search finds", function()
+        for _, lang in ipairs{ "en", "fr" } do
+            local b = Board:new{ lang = lang, defer = true }
+            for seed = 1, 3 do
+                math.randomseed(seed)
+                b:newGame()
+                local want, count = exhaustive(b), 0
+                for w, s in pairs(want) do
+                    count = count + 1
+                    assert.are.equal(s, b._all_words[w], lang .. " " .. w)
+                end
+                assert.are.equal(count, b.total_possible)
+            end
+        end
+    end)
+
+    it("solves a grid quickly once the dictionary is loaded", function()
+        local b = Board:new{ lang = "fr", defer = true }
+        b:newGame()   -- builds the prefix set
+        local t0 = os.clock()
+        for seed = 1, 20 do
+            math.randomseed(seed)
+            b.n = seed % 2 == 0 and 5 or 4
+            b:newGame()
+        end
+        -- was ~250 ms per grid before 1.6.0
+        assert.is_true((os.clock() - t0) / 20 < 0.05)
+    end)
+end)
