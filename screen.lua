@@ -38,7 +38,7 @@ local BoggleScreen = ScreenBase:extend{}
 
 function BoggleScreen:init()
     local state = self.plugin:loadState()
-    local lang  = self.plugin:getSetting("lang", "en")
+    local lang  = self.plugin:getLang({ "fr", "en" })
     -- Restoring a save: defer, so the board does not roll and solve a grid
     -- that load() replaces right away.
     self.board  = BoggleBoard:new{ lang = lang, defer = not self.fresh }
@@ -197,7 +197,7 @@ function BoggleScreen:openLangMenu()
         parent     = self,
         on_select  = function(lang)
             self.board.lang = lang
-            self.plugin:saveSetting("lang", lang)
+            self.plugin:setLang(lang)
             self.board:_loadDict()
             if self.lang_btn then
                 self.lang_btn:setText(self:_langLabel(), self.lang_btn.width)
@@ -218,7 +218,7 @@ function BoggleScreen:openModeMenu()
 end
 
 function BoggleScreen:_langLabel()
-    local lang = self.plugin:getSetting("lang", "en")
+    local lang = self.plugin:getLang({ "fr", "en" })
     return T(_("Language: %1"), lang == "fr" and "FR" or "EN")
 end
 

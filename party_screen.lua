@@ -70,10 +70,14 @@ local PartyScreen = ScreenBase:extend{}
 
 function PartyScreen:init()
     local p = self.plugin
-    -- The word list language: the last multiplayer choice, else the solo
-    -- one, else KOReader's language.
-    local lang = p:getSetting("party_lang") or p:getSetting("lang")
-        or (_.lang() == "fr" and "fr" or "en")
+    -- The word list language: the multiplayer choice while KOReader keeps
+    -- the language it was made under, else the solo language (which follows
+    -- KOReader the same way).
+    local lang = p:getLang({ "fr", "en" })
+    local party = p:getSetting("party_lang")
+    if party and p:getSetting("party_lang_ko") and p:getLang({ "fr", "en" }, nil, "party_lang") == party then
+        lang = party
+    end
     self.lang       = lang == "fr" and "fr" or "en"
     self.duration   = tonumber(p:getSetting("party_duration", Logic.DEFAULT_DURATION)) or Logic.DEFAULT_DURATION
     self.show_timer = p:getSetting("party_show_timer", true) and true or false
@@ -266,7 +270,7 @@ function PartyScreen:openLangMenu()
         parent     = self,
         on_select  = function(lang)
             self.lang = lang
-            self.plugin:saveSetting("party_lang", lang)
+            self.plugin:setLang(lang, "party_lang")
             -- Between rounds the waiting grid is rolled again; during a
             -- round the change waits for the next grid.
             if self.match.phase == "ready" then
