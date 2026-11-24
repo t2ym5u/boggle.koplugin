@@ -21,7 +21,7 @@ Longer words score more points.
 
 - **Grid sizes** — 4×4 (classic), 5×5 (extended)
 - **Two languages** — EN (105,145 words) and FR (132,778 words), both 3-9 letters
-- **Word validation** — against a bundled dictionary for the chosen language (English uses [ENABLE](https://github.com/dolph/dictionary), the Public-Domain word-game list; French is a CC0 Scrabble-valid list)
+- **Word validation** — against a bundled dictionary for the chosen language (English uses [ENABLE](https://github.com/dolph/dictionary), the Public-Domain word-game list; French is a CC0 Scrabble-valid list, widened with the forms of the [Grammalecte](https://grammalecte.net) lexicon, Dicollecte, MPL 2.0, minus familiar, slang, pejorative and sexual words)
 - **Scoring** — standard Boggle scoring (3 letters = 1 pt, up to 8+ letters = 11 pts)
 - **Timer** — configurable countdown (1, 2 or 3 minutes) or untimed mode
 - **Word list** — found words listed alphabetically with scores

@@ -1,0 +1,31 @@
+# Words of the Grammalecte lexicon never added to the word lists, on top of
+# the word games' family blocklists (tools/lexicon_fr.py, family_blocklist):
+# vulgar, sexual, slurs, drugs, nazism. Uppercase, accents stripped. Every
+# form of a listed word is left out too (by lemma), so the lemma is enough.
+# 2026-11-24: first review of the additions.
+BOUGRERIE
+BRANLOCHER
+CANNABINACEE
+CATINER
+COCAIER
+COUILLARD
+COUILLU
+DECONNEUR
+DENAZIFIER
+ENFOIRER
+FESSEUR
+HACHICH
+HACHICHE
+HACHICHIN
+HASCHICH
+HASCHICHE
+JUNKIE
+JUNKY
+NAZILLON
+NEGRERIE
+NEGRIER
+NEGRIFIER
+NEONAZI
+PISSEMENT
+PISSOTER
+VULVITE

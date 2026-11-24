@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] - 2026-11-24
+
+### Changed
+- French accepts 27,852 more words (132,778 -> 160,630), taken from the
+  Grammalecte lexicon (Dicollecte, MPL 2.0): inflected forms and rarer words
+  the old list missed. Familiar, slang, pejorative and sexual words are left
+  out. A grid's list of possible words grows accordingly. The French
+  dictionary takes about 3.4 MB more memory while a game is open.
+- `tools/lexicon_fr.py` builds them into a second block of `words_fr.lua`;
+  the first block, which the other word games' build scripts read, is
+  unchanged.
+
 ## [1.6.9] - 2026-11-24
 
 ### Fixed
