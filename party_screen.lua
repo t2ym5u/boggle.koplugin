@@ -120,6 +120,7 @@ end
 
 function PartyScreen:closeScreen()
     self:_stopCountdown()
+    self:cancelScheduled()
     self:saveGame()
     if self.plugin then self.plugin:onScreenClosed() end
     UIManager:close(self)
@@ -144,7 +145,7 @@ function PartyScreen:_startCountdown()
     -- Generation counter: any tick from a previous countdown sees a stale gen and exits.
     self._tick_gen = (self._tick_gen or 0) + 1
     local gen = self._tick_gen
-    UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+    self:schedule(1, function() self:_onTick(gen) end)
 end
 
 function PartyScreen:_stopCountdown()
@@ -162,7 +163,7 @@ function PartyScreen:_onTick(gen)
     if remaining <= 0 then
         self:onSolutions()
     else
-        UIManager:scheduleIn(1, function() self:_onTick(gen) end)
+        self:schedule(1, function() self:_onTick(gen) end)
     end
 end
 
@@ -185,6 +186,7 @@ function PartyScreen:_rollGrid()
 end
 
 function PartyScreen:onNewGame()
+    self:cancelScheduled()
     self:_stopCountdown()
     self.timer:reset()
     self.match = self:_newMatch()
